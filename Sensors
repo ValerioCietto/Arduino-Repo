@@ -1,0 +1,59 @@
+int lightPin = 0;  //define a pin for Photo resistor
+int lightPin1 = 1;  //define a pin for Photo resistor
+int ledPin=11;     //define a pin for LED
+int ledRed=13;
+int caliber=-5;
+/*
+5v-----a1-T--photoResistor---wireToA0--led+
+          |                             |
+          |                   gnd---T--(led-)  
+          |            
+          \--(nail+)---soil---(nail-)-wireToA1-led+
+                                                |
+                                         gnd--(led-)
+                                       
+*/
+
+void setup()
+{
+    Serial.begin(9600);  //Begin serial communcation
+    pinMode( ledPin, OUTPUT );
+    pinMode( ledRed, OUTPUT );
+}
+
+void loop()
+{
+    Serial.print(analogRead(lightPin)); //Write the value of the photoresistor to the serial monitor.
+    digitalWrite(ledRed, HIGH);  //send the value to the ledPin. Depending on value of resistor 
+                                                //you have  to divide the value. for example, 
+                                                //with a 10k resistor divide the value by 2, for 100k resistor divide by 4.
+                                                
+   if(analogRead(lightPin)>525){
+       Serial.print("luce   ");
+       
+   }
+   else if(analogRead(lightPin)>510){
+       Serial.print("nuvola ");
+   }
+   else if(analogRead(lightPin)>400){
+       Serial.print("ombra  ");
+   }
+   
+   Serial.print(analogRead(lightPin1)-caliber); //Write the value of the photoresistor to the serial monitor.
+   if(analogRead(lightPin1)-caliber>540){
+       Serial.print("bagnato ");
+       
+   }
+   else if(analogRead(lightPin1)-caliber>430){
+       Serial.print("umido   ");
+   }
+   else if(analogRead(lightPin1)-caliber>100){
+       Serial.print("asciutto");
+   }
+   else{
+       Serial.print("");
+   }
+   
+   Serial.println("");
+   delay(1000); //short delay for faster response to light.
+}
