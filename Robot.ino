@@ -23,23 +23,24 @@ pin layout
 2 bt tx
 3 pwm A
 4 bt rx
-5
-6
+5 trig pin
+6 echo pin
 7 servo signal
 8 brake B
 9 brake A
-10
+10 
 11 pwm B
 12 dir A
 13 dir B
-0
-1
-2
-3
-4
-5
+A0
+A1
+A2
+A3
+A4
+A5
 The program requires that the RN42 bluetooth chip has the Tx pin linked to the 2 pin and the Rx pin linked to the 4 pin
 */
+
 int bluetoothTx = 2; // TX-O pin of bluetooth mate, Arduino D2
 int bluetoothRx = 4; // RX-I pin of bluetooth mate, Arduino D3
 boolean ledOn = false; //debug boolean
@@ -68,11 +69,30 @@ pinMode(13, OUTPUT); //Initiates Motor Channel B pin
 pinMode(8, OUTPUT); //Initiates Brake Channel B pin
 pinMode(3, OUTPUT); //pwmA
 pinMode(11, OUTPUT); //pwmB
+pinMode(5, OUTPUT);
+  pinMode(6, INPUT);
+ 
 }
 void loop()
 {
+  long duration, distance;
 digitalWrite(3,LOW);
 digitalWrite(11,LOW);
+digitalWrite(5, LOW);  // Added this line
+  delayMicroseconds(2); // Added this line
+  digitalWrite(5, HIGH);
+//  delayMicroseconds(1000); - Removed this line
+  delayMicroseconds(10); // Added this line
+  digitalWrite(5, LOW);
+  duration = pulseIn(6, HIGH);
+  distance = (duration/2) / 29.1;
+  if (distance >= 200 || distance <= 0){
+    Serial.println("Out of range");
+  }
+  else {
+    Serial.print(distance);
+    Serial.println(" cm");
+  }
 //delay(100);
 //digitalWrite(12,LOW);
 //Serial.println("hello");
