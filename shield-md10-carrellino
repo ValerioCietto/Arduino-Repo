@@ -32,10 +32,10 @@
   3 pinDir
   4 bluetooth tx
   5 bluetooth rx
-  6 stepper 1
-  7 stepper 2
-  8 stepper 3
-  9 stepper 4
+  6 stepper 1 (brown)
+  7 stepper 2 (red)
+  8 stepper 3 (oragne)
+  9 stepper 4 (yellow)
   10
   11
   12
@@ -51,7 +51,8 @@
   #include <SoftwareSerial.h>
   #include <Stepper.h>
   // change this to the number of steps on your motor
-  #define STEPS 100
+  #define STEPS 64
+  
   /*******************************************************************************
   * IO DEFINITION *
   *******************************************************************************/
@@ -59,6 +60,7 @@
   const int pinPwm = 3;
   // DIR is connected to pin 2.
   const int pinDir = 2;
+  
   /*******************************************************************************
   * PRIVATE GLOBAL VARIABLES *
   *******************************************************************************/
@@ -66,16 +68,19 @@
   static int iSpeed = 0;
   // Acceleration of the motor.
   static int iAcc = 1;
+  
   /*******************************************************************************
   * STEPPER VARIABLES *
   *******************************************************************************/
-  Stepper stepper(STEPS, 6, 7, 8, 9);
+  Stepper stepper(STEPS, 6, 8, 7, 9);
+  
   /*******************************************************************************
   * BLUETOOTH VARIABLES *
   *******************************************************************************/
   int bluetoothTx = 4;
   int bluetoothRx = 5;
   SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+  
   /*******************************************************************************
   * FUNCTIONS *
   *******************************************************************************/
@@ -84,7 +89,9 @@
     // Initialize the PWM and DIR pins as digital outputs.
     pinMode(pinPwm, OUTPUT);
     pinMode(pinDir, OUTPUT);
-    //Serial.begin(9600);
+    
+    Serial.begin(9600);
+    
     //Bluetooth setup
     bluetooth.begin(115200); // The Bluetooth Mate defaults to 115200bps
     bluetooth.print("$"); // Print three times individually
@@ -94,50 +101,61 @@
     bluetooth.println("U,9600,N"); // Temporarily Change the baudrate to 9600, no parity
     bluetooth.begin(9600); // Start bluetooth serial at 9600
     bluetooth.print("---");
-    // set the speed of the motor to 30 RPMs
-    stepper.setSpeed(30);
+    // set the speed of the motor to 100 RPMs
+    stepper.setSpeed(100);
   }
   // The loop routine runs over and over again forever.
   
   void loop() {
-    // Control the motor according to the speed value.
-    // Positive speed value = CW,
-    // Negative speed value = CCW.
-    //Serial.println("listening");
-    //char msg = Serial.read();
-    if(bluetooth.available()){//bluetooth.available()
-      // Send any characters the Serial monitor prints to the bluetooth
-      //bluetooth.print("!");//(char)Serial.read()
+    
+    // SERIAL CONTROL
+    if(Serial.available()){
+      char msgSerial = (char)Serial.read(); //read next character, and removes it from the queue
+      char nextSerial = (char)Serial.peek(); //looks for next character, but doesn't eliminate it from the queue
+      if(msgSerial == nextSerial){
+        Serial.read();
+      }
+      //Serial.println(msgSerial);
+      if(msgSerial == 'a'){
+        stepCW();
+        Serial.println(msgSerial);
+      }
+      if(msgSerial == 'c'){
+        stepACW();
+        bluetooth.println(msgSerial);
+      }
+      if(msgSerial == 'd'){
+        slideDX();
+        Serial.println(msgSerial);
+      }
+      if(msgSerial == 's'){
+        slideSX();
+        Serial.println(msgSerial);
+      }
+    }
+    
+    // BLUETOOTH CONTROL
+    if(bluetooth.available()){
       char msg = (char)bluetooth.read(); //read next character, and removes it from the queue
       char next = (char)bluetooth.peek(); //looks for next character, but doesn't eliminate it from the queue
       if(msg == next){
         bluetooth.read();
       }
       bluetooth.println(msg);
-      if(msg == 'd'){
+      if(msg == 'a'){
         stepCW();
         bluetooth.println(msg);
       }
-      if(msg == 'a'){
+      if(msg == 'c'){
         stepACW();
         bluetooth.println(msg);
       }
-      if(msg == 'w'){
-        analogWrite(3, 0);
-        delay(100);
-        analogWrite(3, 255);
-        digitalWrite(pinDir, LOW);
-        delay(1000);
-        analogWrite(3, 0);
+      if(msg == 'd'){
+        slideDX();
         bluetooth.println(msg);
       }
       if(msg == 's'){
-        analogWrite(3, 0);
-        delay(100);
-        analogWrite(3, 255);
-        digitalWrite(pinDir, HIGH);
-        delay(1000);
-        analogWrite(3, 0);
+        slideSX();
         bluetooth.println(msg);
       }
     }
@@ -145,11 +163,27 @@
   }
     
   void stepCW(){
-    stepper.setSpeed(100);
     stepper.step(100);
   }
   
   void stepACW(){
-    stepper.setSpeed(-100);
     stepper.step(-100);
+  }
+  
+  void slideSX(){
+    analogWrite(3, 0);
+    delay(100);
+    analogWrite(3, 255);
+    digitalWrite(pinDir, HIGH);
+    delay(1000);
+    analogWrite(3, 0);
+  }
+  
+  void slideDX(){
+    analogWrite(3, 0);
+    delay(100);
+    analogWrite(3, 255);
+    digitalWrite(pinDir, LOW);
+    delay(1000);
+    analogWrite(3, 0);
   }
