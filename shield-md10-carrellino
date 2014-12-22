@@ -1,252 +1,234 @@
 /*******************************************************************************
-  *
-  * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTY AND SUPPORT
-  * IS APPLICABLE TO THIS SOFTWARE IN ANY FORM. CYTRON TECHNOLOGIES SHALL NOT,
-  * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR CONSEQUENTIAL
-  * DAMAGES, FOR ANY REASON WHATSOEVER.
-  *
-  ********************************************************************************
-  *
-  * SHIELD-MD10 EXAMPLE SOURCE CODE
-  *
-  *
-  *
-  * DESCRIPTION:
-  *
-  * This is an example to control the motor by using SHIELD-MD10.
-  * The speed of the motor will ramp up from 0 to full speed,
-  * and then ramp down back to 0 in both CW and CCW direction.
-  *
-  *
-  *
-  * AUTHOR : Kong Wai Weng
-  * COMPANY : Cytron Technologies Sdn Bhd
-  * REVISION : 1.0
-  * DATE : 22/10/2012
-  *
-  //pin out
-  /*
-  0 tx
-  1 rx
-  2 interrupt~
-  3 interrupt~
-  4 bluetooth tx
-  5 bluetooth rx
-  6 stepper 1 (brown)
-  7 stepper 2 (red)
-  8 stepper 3 (oragne)
-  9 stepper 4 (yellow)
-  10 pinpwm
-  11
-  12 pinDir
-  13
-  A0
-  A1
-  A2
-  A3
-  A4
-  A5
-  */
-  /*******************************************************************************/
-  #include <SoftwareSerial.h>
-  #include <Stepper.h>
-  // change this to the number of steps on your motor
-  #define STEPS 64
-  
-  
-  
-   /*******************************************************************************
-  * MOTOR VARIABLES *
-  *******************************************************************************/
-  int stepNumber = 0;
-  int interrupt1 = 2;
-  int interrupt2 = 3;
-  
-  /*******************************************************************************
-  * IO DEFINITION *
-  *******************************************************************************/
-  // PWM is connected to pin 3.
-  const int pinPwm = 10;
-  // DIR is connected to pin 2.
-  const int pinDir = 12;
-  
-  /*******************************************************************************
-  * PRIVATE GLOBAL VARIABLES *
-  *******************************************************************************/
-  // Speed of the motor.
-  static int iSpeed = 0;
-  // Acceleration of the motor.
-  static int iAcc = 1;
-  
-  /*******************************************************************************
-  * STEPPER VARIABLES *
-  *******************************************************************************/
-  Stepper stepper(STEPS, 6, 8, 7, 9);
-  
-  /*******************************************************************************
-  * BLUETOOTH VARIABLES *
-  *******************************************************************************/
-  int bluetoothTx = 4;
-  int bluetoothRx = 5;
-  SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
-  
-  /*******************************************************************************
-  * FUNCTIONS *
-  *******************************************************************************/
-  // The setup routine runs once when you press reset.
-  void setup() {
-    // Initialize the PWM and DIR pins as digital outputs.
-    pinMode(pinPwm, OUTPUT);
-    pinMode(pinDir, OUTPUT);
-    
-    //pinMode(interrupt1,INPUT);
-    //pinMode(interrupt2,INPUT);
-    //attachInterrupt(interrupt1, motorChange2, CHANGE);
-    //attachInterrupt(interrupt2, motorChange3, CHANGE);
-    
-    Serial.begin(9600);
-    
-    //Bluetooth setup
-    bluetooth.begin(115200); // The Bluetooth Mate defaults to 115200bps
-    bluetooth.print("$"); // Print three times individually
-    bluetooth.print("$");
-    bluetooth.print("$"); // Enter command mode
-    delay(400); // Short delay, wait for the Mate to send back CMD
-    bluetooth.println("U,9600,N"); // Temporarily Change the baudrate to 9600, no parity
-    bluetooth.print("AT+NAME=\"Arduino\"\r\n");
-    bluetooth.begin(9600); // Start bluetooth serial at 9600
-    bluetooth.print("---");
-    // set the speed of the motor to 100 RPMs
-    stepper.setSpeed(100);
-  }
-  // The loop routine runs over and over again forever.
-  
-  void loop() {
-    // SERIAL CONTROL
-    if(Serial.available()){
+*
+* THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTY AND SUPPORT
+* IS APPLICABLE. AUTHORS SHALL NOT BE LIABLE FOR LOSSES OR DAMAGES.
+* CAN BE USED IN COMMERCIAL APPLICATIONS.
+*
+********************************************************************************
+*
+* DESCRIPTION:
+* this code it's intended to be used as firmware for a motorized skate,
+* controlled by serial (USB), bluetooth (HC05).
+* The firmware also listen for feedback from 2 lever interrupt used as left and right end-stop
+*
+*
+* AUTHOR : Valerio Cietto, brainbi0s
+* COMPANY : RecTV
+* REVISION : 3.0
+* DATE : 22/12/2014
+*
+//pin out
+/*
+0 tx
+1 rx
+2 interrupt~
+3 interrupt~
+4 bluetooth tx
+5 bluetooth rx
+6 stepper 1 (brown)
+7 stepper 2 (red)
+8 stepper 3 (oragne)
+9 stepper 4 (yellow)
+10 pinpwm
+11
+12 pinDir
+13
+A0
+A1
+A2
+A3
+A4
+A5
+*/
+/*******************************************************************************/
+#include <SoftwareSerial.h>
+#include <Stepper.h>
+// change this to the number of steps on your motor
+#define STEPS 64
+/*******************************************************************************
+* MOTOR VARIABLES *
+*******************************************************************************/
+int stepNumber = 0;
+int interrupt1 = 2;
+int interrupt2 = 3;
+const int MAX_POWER = 255;
+const int STOP = 0;
+int steps = 100;
+const int SHORT = 100;
+const int LONG = 1000;
+/*******************************************************************************
+* IO DEFINITION *
+*******************************************************************************/
+// PWM is connected to pin 3.
+const int pinPwm = 10;
+// DIR is connected to pin 2.
+const int pinDir = 12;
+/*******************************************************************************
+* PRIVATE GLOBAL VARIABLES *
+*******************************************************************************/
+// Speed of the motor.
+static int iSpeed = 0;
+// Acceleration of the motor.
+static int iAcc = 1;
+/*******************************************************************************
+* STEPPER VARIABLES *
+*******************************************************************************/
+Stepper stepper(STEPS, 6, 8, 7, 9);
+/*******************************************************************************
+* BLUETOOTH VARIABLES *
+*******************************************************************************/
+int bluetoothTx = 4;
+int bluetoothRx = 5;
+SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+/*******************************************************************************
+* FUNCTIONS *
+*******************************************************************************/
+// The setup routine runs once when you press reset.
+void setup() {
+   // Initialize the PWM and DIR pins as digital outputs.
+   pinMode(pinPwm, OUTPUT);
+   pinMode(pinDir, OUTPUT);
+   //pinMode(interrupt1,INPUT);
+   //pinMode(interrupt2,INPUT);
+   //attachInterrupt(interrupt1, motorChange2, CHANGE);
+   //attachInterrupt(interrupt2, motorChange3, CHANGE);
+   Serial.begin(9600);
+   //Bluetooth setup
+   bluetooth.begin(115200); // The Bluetooth Mate defaults to 115200bps
+   bluetooth.print("$"); // Print three times individually
+   bluetooth.print("$");
+   bluetooth.print("$"); // Enter command mode
+   delay(400); // Short delay, wait for the Mate to send back CMD
+   bluetooth.println("U,9600,N"); // Temporarily Change the baudrate to 9600, no parity
+   bluetooth.print("AT+NAME=\"Arduino\"\r\n");
+   bluetooth.begin(9600); // Start bluetooth serial at 9600
+   bluetooth.print("---");
+   // set the speed of the motor to 100 RPMs
+   stepper.setSpeed(100);
+}
+// The loop routine runs over and over again forever.
+void loop() {
+   // SERIAL CONTROL
+   if(Serial.available()){
       char msgSerial = (char)Serial.read(); //read next character, and removes it from the queue
       char nextSerial = (char)Serial.peek(); //looks for next character, but doesn't eliminate it from the queue
       if(msgSerial == nextSerial){
         Serial.read();
       }
       if(msgSerial == 'a'){
-        stepCW();
-        Serial.print("Command: ");
-        Serial.println(msgSerial);
+         stepCW();
+         Serial.print("Command: ");
+         Serial.println(msgSerial);
       }
       if(msgSerial == 'c'){
-        stepACW();
-        Serial.print("Command: ");
-        Serial.println(msgSerial);
+         stepACW();
+         Serial.print("Command: ");
+         Serial.println(msgSerial);
       }
       if(msgSerial == 'd'){
-        slideDX();
-        Serial.print("Command: ");
-        Serial.println(msgSerial);
+         slideDX();
+         Serial.print("Command: ");
+         Serial.println(msgSerial);
       }
       if(msgSerial == 's'){
-        slideSX();
-        Serial.print("Command: ");
-        Serial.println(msgSerial);
+         slideSX();
+         Serial.print("Command: ");
+         Serial.println(msgSerial);
       }
-      
-          
-    }
-    
-    // BLUETOOTH CONTROL
-    if(bluetooth.available()){
+   }
+   // BLUETOOTH CONTROL
+   if(bluetooth.available()){
       char msg = (char)bluetooth.read(); //read next character, and removes it from the queue
       char next = (char)bluetooth.peek(); //looks for next character, but doesn't eliminate it from the queue
       if(msg == next){
-        bluetooth.read();
+         bluetooth.read();
       }
       bluetooth.println(msg);
       if(msg == 'a'){
-        stepCW();
-        bluetooth.println(msg);
+         stepCW();
+         bluetooth.println(msg);
       }
       if(msg == 'c'){
-        stepACW();
-        bluetooth.println(msg);
+         stepACW();
+         bluetooth.println(msg);
       }
       if(msg == 'd'){
-        slideDX();
-        bluetooth.println(msg);
+         slideDX();
+         bluetooth.println(msg);
       }
       if(msg == 's'){
-        slideSX();
-        bluetooth.println(msg);
+         slideSX();
+         bluetooth.println(msg);
       }
-    }
-    delay(10);
-  }
-    
-  void stepCW(){
-    stepper.step(100);
-  }
+   }
+   delay(10);
+}
+
+void stepCW(){
   
-  void stepACW(){
-    stepper.step(-100);
-  }
+   stepper.step(steps);
+   
+}
+
+void stepACW(){
   
-  void slideSX(){
-    analogWrite(3, 0);
-    delay(100);
-    analogWrite(3, 255);
-    digitalWrite(pinDir, HIGH);
-    delay(1000);
-    analogWrite(3, 0);
-    stepNumber -= 1;
-    Serial.print("Number of steps: ");
-    Serial.println(stepNumber);
-  }
+   stepper.step(-steps);
+   
+}
+
+void slideSX(){
   
-  void slideDX(){
-    analogWrite(3, 0);
-    delay(100);
-    analogWrite(3, 255);
-    digitalWrite(pinDir, LOW);
-    delay(1000);
-    analogWrite(3, 0);
-    stepNumber += 1;
-    Serial.print("Number of steps: ");
-    Serial.println(stepNumber);
-  }
+   analogWrite(pinPwm, STOP);
+   delay(SHORT);
+   analogWrite(pinPwm, MAX_POWER);
+   digitalWrite(pinDir, HIGH);
+   delay(LONG);
+   analogWrite(pinPwm, STOP);
+   stepNumber -= 1;
+   Serial.print("Number of steps: ");
+   Serial.println(stepNumber);
+   
+}
+
+void slideDX(){
   
-  void sildeXStepsD(int steps){
-    for (int i=0; i < steps; i++){
-      analogWrite(3, 0);
-      delay(100);
-      analogWrite(3, 255);
-      digitalWrite(pinDir, LOW);
-      delay(1000);
-      analogWrite(3, 0);
-      stepNumber += 1;  
-    }
-    Serial.print("Number of steps: ");
-    Serial.println(stepNumber);
-  }
+   analogWrite(pinPwm, STOP);
+   delay(SHORT);
+   analogWrite(pinPwm, MAX_POWER);
+   digitalWrite(pinDir, LOW);
+   delay(LON);
+   analogWrite(pinPwm, STOP);
+   stepNumber += 1;
+   Serial.print("Number of steps: ");
+   Serial.println(stepNumber);
+   
+}
+
+void slideXStepsD(int steps){
+   
+   for (int i=0; i < steps; i++){
+      slideDX();
+   }
+   
+}
+
+void slideXStepsS(int steps){
   
-  void sildeXStepsS(int steps){
-    for (int i=0; i < steps; i++){
-      analogWrite(3, 0);
-      delay(100);
-      analogWrite(3, 255);
-      digitalWrite(pinDir, HIGH);
-      delay(1000);
-      analogWrite(3, 0);
-      stepNumber -= 1;
-    }
-    Serial.print("Number of steps: ");
-    Serial.println(stepNumber);
-  }
+   for (int i=0; i < steps; i++){
+      slideSX();
+   }
+   
+}
+
+void motorChange2(){
+   
+   int uno = digitalRead(interrupt1);
+   Serial.println(uno);
+   
+}
+void motorChange3(){
   
-  void motorChange2(){
-    int uno = digitalRead(2);
-    Serial.println(uno);
-  }
-  
-  void motorChange3(){
-    int due = digitalRead(11);
-    Serial.println(due);
-  }
+   int due = digitalRead(interrupt2);
+   Serial.println(due);
+   
+}
