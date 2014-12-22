@@ -1,4 +1,4 @@
-  /*******************************************************************************
+/*******************************************************************************
   *
   * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTY AND SUPPORT
   * IS APPLICABLE TO THIS SOFTWARE IN ANY FORM. CYTRON TECHNOLOGIES SHALL NOT,
@@ -28,16 +28,16 @@
   /*
   0 tx
   1 rx
-  2 pinpwm
-  3 pinDir
+  2 interrupt~
+  3 interrupt~
   4 bluetooth tx
   5 bluetooth rx
   6 stepper 1 (brown)
   7 stepper 2 (red)
   8 stepper 3 (oragne)
   9 stepper 4 (yellow)
-  10
-  11
+  10 pinpwm
+  11 pinDir
   12
   13
   A0
@@ -53,13 +53,22 @@
   // change this to the number of steps on your motor
   #define STEPS 64
   
+  
+  
+   /*******************************************************************************
+  * MOTOR VARIABLES *
+  *******************************************************************************/
+  int stepNumber = 0;
+  int interrupt1 = 2;
+  int interrupt2 = 3;
+  
   /*******************************************************************************
   * IO DEFINITION *
   *******************************************************************************/
   // PWM is connected to pin 3.
-  const int pinPwm = 3;
+  const int pinPwm = 10;
   // DIR is connected to pin 2.
-  const int pinDir = 2;
+  const int pinDir = 11;
   
   /*******************************************************************************
   * PRIVATE GLOBAL VARIABLES *
@@ -90,6 +99,11 @@
     pinMode(pinPwm, OUTPUT);
     pinMode(pinDir, OUTPUT);
     
+    //pinMode(interrupt1,INPUT);
+    //pinMode(interrupt2,INPUT);
+    //attachInterrupt(interrupt1, motorChange2, CHANGE);
+    //attachInterrupt(interrupt2, motorChange3, CHANGE);
+    
     Serial.begin(9600);
     
     //Bluetooth setup
@@ -107,7 +121,6 @@
   // The loop routine runs over and over again forever.
   
   void loop() {
-    
     // SERIAL CONTROL
     if(Serial.available()){
       char msgSerial = (char)Serial.read(); //read next character, and removes it from the queue
@@ -115,23 +128,29 @@
       if(msgSerial == nextSerial){
         Serial.read();
       }
-      //Serial.println(msgSerial);
+
       if(msgSerial == 'a'){
         stepCW();
+        Serial.print("Command: ");
         Serial.println(msgSerial);
       }
       if(msgSerial == 'c'){
         stepACW();
-        bluetooth.println(msgSerial);
+        Serial.print("Command: ");
+        Serial.println(msgSerial);
       }
       if(msgSerial == 'd'){
         slideDX();
+        Serial.print("Command: ");
         Serial.println(msgSerial);
       }
       if(msgSerial == 's'){
         slideSX();
+        Serial.print("Command: ");
         Serial.println(msgSerial);
       }
+      
+          
     }
     
     // BLUETOOTH CONTROL
@@ -177,6 +196,9 @@
     digitalWrite(pinDir, HIGH);
     delay(1000);
     analogWrite(3, 0);
+    stepNumber -= 1;
+    Serial.print("Number of steps: ");
+    Serial.println(stepNumber);
   }
   
   void slideDX(){
@@ -186,4 +208,45 @@
     digitalWrite(pinDir, LOW);
     delay(1000);
     analogWrite(3, 0);
+    stepNumber += 1;
+    Serial.print("Number of steps: ");
+    Serial.println(stepNumber);
+  }
+  
+  void sildeXStepsD(int steps){
+    for (int i=0; i < steps; i++){
+      analogWrite(3, 0);
+      delay(100);
+      analogWrite(3, 255);
+      digitalWrite(pinDir, LOW);
+      delay(1000);
+      analogWrite(3, 0);
+      stepNumber += 1;  
+    }
+    Serial.print("Number of steps: ");
+    Serial.println(stepNumber);
+  }
+  
+  void sildeXStepsS(int steps){
+    for (int i=0; i < steps; i++){
+      analogWrite(3, 0);
+      delay(100);
+      analogWrite(3, 255);
+      digitalWrite(pinDir, HIGH);
+      delay(1000);
+      analogWrite(3, 0);
+      stepNumber -= 1;
+    }
+    Serial.print("Number of steps: ");
+    Serial.println(stepNumber);
+  }
+  
+  void motorChange2(){
+    int uno = digitalRead(2);
+    Serial.println(uno);
+  }
+  
+  void motorChange3(){
+    int due = digitalRead(11);
+    Serial.println(due);
   }
