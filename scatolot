@@ -1,6 +1,7 @@
-// Demo program for the Dagu Arduino Mini Driver. Uses dead reckoning
-// to try to drive a robot in a square
- 
+//setup bluetooth communication
+//drives the robot with wasd 
+
+
 const int LEFT_MOTOR_DIR_PIN = 7;
 const int LEFT_MOTOR_PWM_PIN = 9;
 const int RIGHT_MOTOR_DIR_PIN = 8;
@@ -17,7 +18,14 @@ void setup()
     pinMode( LEFT_MOTOR_PWM_PIN, OUTPUT );
     pinMode( RIGHT_MOTOR_DIR_PIN, OUTPUT );
     pinMode( RIGHT_MOTOR_PWM_PIN, OUTPUT );
-    Serial.begin(9600);
+    Serial.begin(115200);
+    //Serial.print("$");
+    //Serial.print("$");
+    //Serial.print("$");
+    //delay(400);
+    //Serial.println("U,9600,N");
+    //Serial.print("---");
+    //Serial.begin(9600);
 }
  
 //----------------------------------------------------------
@@ -25,19 +33,23 @@ void loop()
 {
   
   char msg = Serial.read();
+  Serial.println(msg);
   if(msg == 'w'){
-    // Drive forwards at 100%
-    digitalWrite( LEFT_MOTOR_DIR_PIN, HIGH );
-    digitalWrite( RIGHT_MOTOR_DIR_PIN, HIGH );
-    analogWrite( LEFT_MOTOR_PWM_PIN, 255 );
-    analogWrite( RIGHT_MOTOR_PWM_PIN, 255 );
-    delay( DRIVE_FORWARD_TIME_MS );
-    analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
-    analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
- 
+    forward();
   }
   else if(msg == 'a'){
-    // Turn left at 50%
+    turnLeft();
+  }  
+  else if(msg == 's'){
+    backward();
+  }
+  else if(msg == 'd'){
+    turnRight();
+  }  
+    
+}
+void turnLeft(){
+   // Turn left at 50%
     digitalWrite( LEFT_MOTOR_DIR_PIN, HIGH );
     digitalWrite( RIGHT_MOTOR_DIR_PIN, LOW );
     analogWrite( LEFT_MOTOR_PWM_PIN, 128 );
@@ -45,18 +57,8 @@ void loop()
     delay( TURN_TIME_MS );
     analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
     analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
-  }  
-  else if(msg == 's'){
-    // Drive backwards at 100%
-    digitalWrite( LEFT_MOTOR_DIR_PIN, LOW );
-    digitalWrite( RIGHT_MOTOR_DIR_PIN, LOW );
-    analogWrite( LEFT_MOTOR_PWM_PIN, 255 );
-    analogWrite( RIGHT_MOTOR_PWM_PIN, 255 );
-    delay( DRIVE_FORWARD_TIME_MS );
-    analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
-    analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
-  }
-  else if(msg == 'd'){
+}
+void turnRight(){
     // Turn right at 50%
     digitalWrite( LEFT_MOTOR_DIR_PIN, LOW );
     digitalWrite( RIGHT_MOTOR_DIR_PIN, HIGH );
@@ -65,6 +67,24 @@ void loop()
     delay( TURN_TIME_MS );
     analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
     analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
-  }  
-    
 }
+void forward(){
+    // Drive forwards at 100%
+    digitalWrite( LEFT_MOTOR_DIR_PIN, HIGH );
+    digitalWrite( RIGHT_MOTOR_DIR_PIN, HIGH );
+    analogWrite( LEFT_MOTOR_PWM_PIN, 255 );
+    analogWrite( RIGHT_MOTOR_PWM_PIN, 255 );
+    delay( DRIVE_FORWARD_TIME_MS );
+    analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
+    analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
+}
+void backward(){
+    // Drive backwards at 100%
+    digitalWrite( LEFT_MOTOR_DIR_PIN, LOW );
+    digitalWrite( RIGHT_MOTOR_DIR_PIN, LOW );
+    analogWrite( LEFT_MOTOR_PWM_PIN, 255 );
+    analogWrite( RIGHT_MOTOR_PWM_PIN, 255 );
+    delay( DRIVE_FORWARD_TIME_MS );
+    analogWrite( LEFT_MOTOR_PWM_PIN, 0 );
+    analogWrite( RIGHT_MOTOR_PWM_PIN, 0 );
+}  
