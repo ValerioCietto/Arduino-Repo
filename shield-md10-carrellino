@@ -148,7 +148,7 @@ void loop() {
          stepCW();
          bluetooth.println(msg);
       }
-      if(msg == 'c'){
+      if(msg == 'w'){
          stepACW();
          bluetooth.println(msg);
       }
@@ -196,7 +196,7 @@ void slideDX(){
    delay(SHORT);
    analogWrite(pinPwm, MAX_POWER);
    digitalWrite(pinDir, LOW);
-   delay(LON);
+   delay(LONG);
    analogWrite(pinPwm, STOP);
    stepNumber += 1;
    Serial.print("Number of steps: ");
