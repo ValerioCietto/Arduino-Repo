@@ -120,12 +120,12 @@ void loop() {
          Serial.print("Command: ");
          Serial.println(msgSerial);
       }
-      if(msgSerial == 'c'){
+      if(msgSerial == 'd'){
          stepACW();
          Serial.print("Command: ");
          Serial.println(msgSerial);
       }
-      if(msgSerial == 'd'){
+      if(msgSerial == 'w'){
          slideDX();
          Serial.print("Command: ");
          Serial.println(msgSerial);
