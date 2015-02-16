@@ -32,6 +32,7 @@ const int trigPin = 11;
 const int echoPin =12;
 boolean obstacle = false;
 boolean outOfRange = false;
+boolean randomDrive = false;
 int reflex=210;
 boolean ledOn = false; //debug boolean
 boolean executing = false; //stops reading if the robot is moving to prevent long queues
@@ -72,26 +73,27 @@ void loop()
   Serial.println(distance);
   obstacle = (distance>30)? false : true;
   outOfRange = (distance>200)? true : false;
-  int randDir = random(5);
-  int randTime = random(100,500);
-  if(randDir == 0){
-    steersx(randTime);
-  }
-  else if(randDir == 1){
-    if(!obstacle){
-      forward(randTime);
+  if(randomDrive){
+    int randDir = random(5);
+    int randTime = random(100,500);
+    if(randDir == 0){
+      steersx(randTime);
     }
+    else if(randDir == 1){
+      if(!obstacle){
+        forward(randTime);
+      }
+    }
+    else if(randDir == 2){
+      backward(randTime);
+    }
+    else if(randDir == 3){
+      steerdx(randTime);
+    }
+    else if(randDir == 4){
+      delay(randTime);
+    } 
   }
-  else if(randDir == 2){
-    backward(randTime);
-  }
-  else if(randDir == 3){
-    steerdx(randTime);
-  }
-  else if(randDir == 4){
-    delay(randTime);
-  } 
-  
   
   if(Serial.available()){//bluetooth.available()
     // Send any characters the Serial monitor prints to the bluetooth
