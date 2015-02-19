@@ -70,6 +70,8 @@ const int pinDir = 12;
 static int iSpeed = 0;
 // Acceleration of the motor.
 static int iAcc = 1;
+const int MAX_STEPS = 20;
+boolean moving = false;
 /*******************************************************************************
 * STEPPER VARIABLES *
 *******************************************************************************/
@@ -80,6 +82,8 @@ Stepper stepper(STEPS, 6, 8, 7, 9);
 int bluetoothTx = 4;
 int bluetoothRx = 5;
 SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+char msg = 'n';
+char next = 'n';
 /*******************************************************************************
 * FUNCTIONS *
 *******************************************************************************/
@@ -138,8 +142,8 @@ void loop() {
    }
    // BLUETOOTH CONTROL
    if(bluetooth.available()){
-      char msg = (char)bluetooth.read(); //read next character, and removes it from the queue
-      char next = (char)bluetooth.peek(); //looks for next character, but doesn't eliminate it from the queue
+      msg = (char)bluetooth.read(); //read next character, and removes it from the queue
+      next = (char)bluetooth.peek(); //looks for next character, but doesn't eliminate it from the queue
       if(msg == next){
          bluetooth.read();
       }
@@ -177,31 +181,35 @@ void stepACW(){
 }
 
 void slideSX(){
-  
-   analogWrite(pinPwm, STOP);
-   delay(SHORT);
-   analogWrite(pinPwm, MAX_POWER);
-   digitalWrite(pinDir, HIGH);
-   delay(LONG);
-   analogWrite(pinPwm, STOP);
-   stepNumber -= 1;
-   Serial.print("Number of steps: ");
-   Serial.println(stepNumber);
-   
+   if(-MAX_STEPS<stepNumber){
+      analogWrite(pinPwm, STOP);
+      delay(SHORT);
+      moving = true;
+      analogWrite(pinPwm, MAX_POWER);
+      digitalWrite(pinDir, HIGH);
+      delay(LONG);
+      analogWrite(pinPwm, STOP);
+      moving = false;
+      stepNumber -= 1;
+      Serial.print("Number of steps: ");
+      Serial.println(stepNumber);
+   }
 }
 
 void slideDX(){
-  
-   analogWrite(pinPwm, STOP);
-   delay(SHORT);
-   analogWrite(pinPwm, MAX_POWER);
-   digitalWrite(pinDir, LOW);
-   delay(LONG);
-   analogWrite(pinPwm, STOP);
-   stepNumber += 1;
-   Serial.print("Number of steps: ");
-   Serial.println(stepNumber);
-   
+   if(MAX_STEPS>stepNumber){
+      analogWrite(pinPwm, STOP);
+      delay(SHORT);
+      moving = true;
+      analogWrite(pinPwm, MAX_POWER);
+      digitalWrite(pinDir, LOW);
+      delay(LONG);
+      analogWrite(pinPwm, STOP);
+      moving = false
+      stepNumber += 1;
+      Serial.print("Number of steps: ");
+      Serial.println(stepNumber);
+   }
 }
 
 void slideXStepsD(int steps){
