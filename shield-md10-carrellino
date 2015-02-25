@@ -119,12 +119,12 @@ void loop() {
       if(msgSerial == nextSerial){
         Serial.read();
       }
-      if(msgSerial == 'a'){
+      if(msgSerial == '0'){
          stepCW();
          Serial.print("Command: ");
          Serial.println(msgSerial);
       }
-      if(msgSerial == 'd'){
+      if(msgSerial == '1'){
          stepACW();
          Serial.print("Command: ");
          Serial.println(msgSerial);
@@ -205,7 +205,7 @@ void slideDX(){
       digitalWrite(pinDir, LOW);
       delay(LONG);
       analogWrite(pinPwm, STOP);
-      moving = false
+      moving = false;
       stepNumber += 1;
       Serial.print("Number of steps: ");
       Serial.println(stepNumber);
