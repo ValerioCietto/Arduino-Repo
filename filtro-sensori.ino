@@ -1,6 +1,6 @@
-
 int previousValue;
 int currentValue;
+int expectedValue;
 
 int noise = 10;
 
