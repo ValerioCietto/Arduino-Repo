@@ -1,11 +1,13 @@
-int previousValue;
-int currentValue;
+int previousValue; //ultimo misuramento
+int currentValue; //valore corrente
 Servo myservo; 
+int flexSensor=0;
 
-int noise = 350;//how much the peak are high 
+int noise = 350;//se il prossimo rilevamento è cambia meno di 350, viene scartato
 
 void setup() {
-  previousValue = analogRead(0);
+  pinMode(flexSensor, INPUT);
+  previousValue = analogRead(flexSensor);
   currentValue = previousValue;
   expectedValue = previousValue;
   
@@ -15,8 +17,8 @@ void setup() {
 }
 
 void loop() {
-  currentValue = analogRead(0);
-  if( abs(currentValue-previousValue) > noise){
+  currentValue = analogRead(flexSensor);
+  if( abs(currentValue-previousValue) > noise){ //abs è la funzione modulo abs(-5) == 5
     previousValue=currentValue;  
   }
   else{
